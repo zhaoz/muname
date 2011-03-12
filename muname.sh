@@ -34,7 +34,7 @@ if [ ! -d "$FOLDER" ]; then
 	exit 1
 fi
 
-FOLDER=`readlink -f $FOLDER`
+FOLDER=`readlink -f "$FOLDER"`
 
 echo "acting on folder: $FOLDER"
 echo
@@ -51,11 +51,11 @@ if [ $NO_ACT -eq 1 ]; then
 
 	# make a temp dir
 	TMPDIR=`mktemp -d`
-	cd $TMPDIR
+	cd "$TMPDIR"
 
 	RENAME="fake_rename"
 else
-	cd $SORTED
+	cd "$SORTED"
 fi
 
 function normalize() {
@@ -68,7 +68,7 @@ for path in "${FOLDER}"/*.mp3; do
 	name=`basename "$path"`
 
 	title=""
-	artist="a"
+	artist=""
 	album=""
 	track=""
 
@@ -88,6 +88,14 @@ for path in "${FOLDER}"/*.mp3; do
 		cnt=$(( $cnt + 1 ))
 	done
 	IFS=$ORIGIFS
+
+	if [ -z "$artist" -o -z "$album" -o -z "$title" -o -z "$track" ]; then
+		echo "File does not have good id3 data!"
+		echo "    $path"
+		echo ""
+		echo "exiting"
+		exit 1
+	fi
 
 	dest="${artist}/${album}/${track} - ${title}.mp3"
 
