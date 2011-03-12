@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/bin/bash -e
 
 NO_ACT=0
 
@@ -9,9 +8,6 @@ while getopts ":n" o; do
 			NO_ACT=1 ;;
 	esac
 done
-
-NO_ACT=1
-
 
 shift $(($OPTIND - 1))
 
@@ -59,7 +55,7 @@ if [ $NO_ACT -eq 1 ]; then
 
 	RENAME="fake_rename"
 else
-	cd $FOLDER
+	cd $SORTED
 fi
 
 function normalize() {
