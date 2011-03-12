@@ -1,11 +1,13 @@
 #!/bin/bash -e
 
-NO_ACT=0
+# by default, don't do anything
+NO_ACT=1
 
-while getopts ":n" o; do
+while getopts ":e" o; do
 	case "$o" in
-		n)
-			NO_ACT=1 ;;
+		e)
+			# e for execute
+			NO_ACT=0 ;;
 	esac
 done
 
