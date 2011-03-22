@@ -6,6 +6,7 @@ use strict;
 use Cwd qw/abs_path getcwd/;
 use Data::Dumper;
 use File::Basename;
+use File::Copy;
 use File::Find;
 use File::Path qw/mkpath/;
 use File::Temp qw/tempdir/;
@@ -46,6 +47,12 @@ sub fakerename() {
 
 sub realrename() {
 	my ($from, $to) = @_;
+
+	my $dir = &dirname($to);
+	&mkpath($dir);
+
+	# mv the file
+	rename $from, $to;
 }
 
 my $renamer = $ACT ? \&realrename : \&fakerename;
