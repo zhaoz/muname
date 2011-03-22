@@ -67,7 +67,7 @@ sub wanted() {
 	}
 
 	my $file = $File::Find::name;
-	my $tag = get_mp3tag($file);
+	my $tag = get_mp3tag($file, 2);
 
 	# make sure file has all the stuff
 	my @attrs = qw/ARTIST TITLE TRACKNUM ALBUM/;
