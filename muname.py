@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 
 # TODO: need to validate source and destination directories
 # TODO: Define the output format string specification.
@@ -8,13 +8,20 @@ from optparse import OptionParser
 import os
 import sys
 
+from mutagen.easyid3 import EasyID3
+from mutagen.oggvorbis import OggVorbis
+
+
 SUPPORTED_TYPES = ['audio/mpeg', 'audio/ogg']
 DEFAULT_FORMAT = ''
-
   
 
+def GetType(path):
+  return mimetypes.guess_type(path)[0]
+
+
 def IsSong(path):
-  return mimetypes.guess_type(path)[0] in SUPPORTED_TYPES
+  return GetType(path) in SUPPORTED_TYPES
 
 
 class Song(object):
@@ -23,15 +30,30 @@ class Song(object):
   def __init__(self, path):
     self._path = path
 
-  def GetType(self):
-    return mimetypes.guess_type(self._path)[0]
-
   def __str__(self):
     return self._path
   
   def __repr__(self):
     return str(self)
 
+
+class Mp3(Song):
+  pass
+
+
+class Ogg(Song):
+  pass
+
+
+def GetSong(path):
+  t = GetType(path)
+
+  if t == 'audio/mpeg':
+    return Mp3(path)
+  elif t == 'audio/ogg':
+    return Ogg(path)
+  else:
+    return None
 
 class Collection(object):
   """A collection of songs."""
@@ -97,8 +119,9 @@ class MuName(object):
     for root, dirs, files in os.walk(self._source, followlinks=True):
       for f in files:
         path = os.path.join(root, f)
-        if IsSong(path):
-          collection.add(Song(path))
+        song = GetSong(path)
+        if song:
+          collection.add(song)
     
     print(collection)
 
