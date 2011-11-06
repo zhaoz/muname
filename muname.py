@@ -33,6 +33,25 @@ class Song(object):
     return str(self)
 
 
+class Collection(object):
+  """A collection of songs."""
+
+  def __init__(self, format=DEFAULT_FORMAT):
+    self._format = format
+    self.songs = []
+  
+  def add(self, song):
+    if not isinstance(song, Song):
+      song = Song(song)
+    self.songs.append(song)
+
+  def __str__(self):
+    return ', '.join([str(s) for s in self.songs])
+
+  def __repr__(self):
+    return str(self)
+
+
 class MuName(object):
   """MuName Class.
 
@@ -68,15 +87,15 @@ class MuName(object):
     Returns:
       A representation of the music in the directory.
     """
-    songs = []
+    collection = Collection()
 
     for root, dirs, files in os.walk(self._source, followlinks=True):
       for f in files:
         path = os.path.join(root, f)
         if IsSong(path):
-          songs.append(Song(path))
+          collection.add(Song(path))
     
-    print(songs)
+    print(collection)
 
 
 
