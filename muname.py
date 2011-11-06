@@ -78,16 +78,21 @@ class MuName(object):
     else:
       raise IOError('Given source directory does not exist')
   
-  def ExamineSource(self):
+  def CreateCollection(self, collection=None):
     """Build a representation of files in source.
 
     Look at the files in the source directory and extract information for each
     of the files.
 
+    Args:
+      collection: Given collection to update, creates a collection if none
+                  given.
+
     Returns:
       A representation of the music in the directory.
     """
-    collection = Collection()
+    if not collection:
+      collection = Collection()
 
     for root, dirs, files in os.walk(self._source, followlinks=True):
       for f in files:
@@ -134,7 +139,7 @@ def main():
   options = _GetOptions()
   muname = MuName(**options)
 
-  muname.ExamineSource()
+  muname.CreateCollection()
 
 
 if __name__ == "__main__":
