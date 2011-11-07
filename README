@@ -1,9 +1,7 @@
 Mp3 file rename utility
 
-Only has one scheme, mine.
+Pass in schema with python string formatting.
 
-Requires MP3::Info
+ {artist}, {album}, {track}, {title}
 
-Options are -a/act for "act" and -d/destination=<path> for output location
-
-Output location is default to ./sorted
+Requires mutagen lib.
