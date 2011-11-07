@@ -270,7 +270,7 @@ class MuName(object):
 
   def Symlink(self):
     """Create symlinks."""
-    self._TransformCollection(shutil.symlink)
+    self._TransformCollection(os.symlink)
 
 
 def _GetParser():
