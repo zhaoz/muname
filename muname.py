@@ -268,7 +268,7 @@ class MuName(object):
     """Move the collection to the given destination folder."""
     self._TransformCollection(shutil.move)
 
-  def Link(self):
+  def Symlink(self):
     """Create symlinks."""
     self._TransformCollection(shutil.symlink)
 
@@ -282,12 +282,16 @@ def _GetParser():
   parser.add_option('-d', '--destination',
                     dest='destination',
                     help='Destination Directory')
+  parser.add_option('-o', '--operation',
+                    dest='operation',
+                    help='Operation: move, copy, link')
   parser.add_option('-n', '--no-action',
                     dest='no_action',
                     action='store_true',
                     help='Do not actually do the operation')
 
-  parser.set_defaults(no_action=False)
+  parser.set_defaults(no_action=False, operation='move',
+                      output_format=DEFAULT_FORMAT)
 
   return parser
 
@@ -297,18 +301,25 @@ def _GetOptions():
   parser = _GetParser()
 
   (options, args) = parser.parse_args()
-  opt_dict = vars(options)
 
-  # TODO at some point, positional args for src and dest would be nice.
-
-  return opt_dict
+  return options
 
 
 def main():
-  options = _GetOptions()
-  muname = MuName(**options)
+  opts = _GetOptions()
+
+  muname = MuName(destination=opts.destination,
+                  source=opts.source,
+                  no_action=opts.no_action,
+                  output_format=opts.output_format)
   muname.Scan()
-  muname.Move()
+
+  if opts.operation == 'move':
+    muname.Move()
+  elif opts.operation == 'copy':
+    muname.Copy()
+  elif opts.operation == 'symlink':
+    muname.Symlink()
 
 
 if __name__ == "__main__":
