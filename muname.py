@@ -129,7 +129,11 @@ class Collection(object):
     if not isinstance(song, Song):
       song = Song(song)
 
-    self._PutInStructure(song)
+    try:
+      self._PutInStructure(song)
+    except KeyError, ex:
+      sys.stderr.write('Problem with song {0}, missing or bad tag info. '
+                       '{1}\n'.format(song.path, ex))
 
   def _PutInStructure(self, song):
     """Place song in dir structure."""
