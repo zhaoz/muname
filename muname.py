@@ -1,4 +1,5 @@
 #!/usr/bin/python2.7
+# vim: expandtab ts=2 sw=2 :
 
 # TODO: need to validate source and destination directories
 # TODO: Define the output format string specification.
@@ -14,7 +15,7 @@ from mutagen.oggvorbis import OggVorbis
 
 SUPPORTED_TYPES = ['audio/mpeg', 'audio/ogg']
 TAGS = ['artist', 'track', 'album', 'album_artist', 'title', 'genre']
-DEFAULT_FORMAT = ''
+DEFAULT_FORMAT = '{artist}/{album}/{track} - {title}'
   
 
 def GetType(path):
@@ -83,8 +84,8 @@ def GetSong(path):
 class Collection(object):
   """A collection of songs."""
 
-  def __init__(self, format=DEFAULT_FORMAT):
-    self._format = format
+  def __init__(self, format_string=DEFAULT_FORMAT):
+    self._format = format_string
     self.songs = []
   
   def add(self, song):
@@ -139,7 +140,7 @@ class MuName(object):
       A representation of the music in the directory.
     """
     if not collection:
-      collection = Collection()
+      collection = Collection(format_string=self._output_format)
 
     for root, dirs, files in os.walk(self._source, followlinks=True):
       for f in files:
@@ -149,6 +150,7 @@ class MuName(object):
           collection.add(song)
     
     print(collection)
+    return collection
 
 
 
@@ -191,4 +193,4 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
+  main()
