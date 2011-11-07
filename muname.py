@@ -8,6 +8,7 @@ import mimetypes
 from optparse import OptionParser
 import os
 import pprint
+import shutil
 import sys
 
 from mutagen.easyid3 import EasyID3
@@ -17,7 +18,7 @@ from mutagen.oggvorbis import OggVorbis
 SUPPORTED_TYPES = ['audio/mpeg', 'audio/ogg']
 TAGS = ['artist', 'track', 'album', 'album_artist', 'title', 'genre']
 DEFAULT_FORMAT = '{artist}/{album}/{track} - {title}'
-  
+
 
 def GetType(path):
   return mimetypes.guess_type(path)[0]
@@ -96,9 +97,9 @@ class Collection(object):
   def __init__(self, format_string=DEFAULT_FORMAT):
     self._format = format_string
     self._path_parts = _ParseFormatString(self._format)
-    self.songs = []
-    self.structure = {}
-  
+    self._songs = []
+    self._structure = {}
+
   def add(self, song):
     """Add a song to the collection.
 
@@ -110,14 +111,14 @@ class Collection(object):
 
     if not isinstance(song, Song):
       song = Song(song)
-    self.songs.append(song)
+    self._songs.append(song)
 
     self._PutInStructure(song)
 
   def _PutInStructure(self, song):
     """Place song in dir structure."""
 
-    level = self.structure
+    level = self._structure
     last_level = None
     piece = None
 
@@ -134,8 +135,23 @@ class Collection(object):
     # place song at the last level
     last_level[piece] = song
 
+  def songs(self):
+    """Generator that returns tuples of (path, song)."""
+    levels = [('', self._structure)]
+
+    while levels:
+      path, cur_level = levels.pop()
+
+      if not isinstance(cur_level, Song):
+        levels.extend([(os.path.join(path, name), obj) for name, obj in cur_level.items()])
+        continue
+
+      # we've hit a song
+      yield path, cur_level
+
+
   def __str__(self):
-    return pprint.pformat(self.structure)
+    return pprint.pformat(self._structure)
 
   def __repr__(self):
     return str(self)
@@ -166,8 +182,10 @@ class MuName(object):
       self._source = os.path.abspath(source)
     else:
       raise IOError('Given source directory does not exist')
-  
-  def CreateCollection(self, collection=None):
+
+    self._collection = None
+
+  def Scan(self, collection=None):
     """Build a representation of files in source.
 
     Look at the files in the source directory and extract information for each
@@ -189,9 +207,15 @@ class MuName(object):
         song = GetSong(path)
         if song:
           collection.add(song)
-    
-    print(collection)
+
+    self._collection = collection
     return collection
+
+  def Move(self):
+    """Move the collection to the given destination folder."""
+
+    for path, song in self._collection.songs():
+      print 'path: {0} ... song: {1}'.format(os.path.join(self._source, path), song)
 
 
 def _GetParser():
@@ -228,8 +252,8 @@ def _GetOptions():
 def main():
   options = _GetOptions()
   muname = MuName(**options)
-
-  muname.CreateCollection()
+  muname.Scan()
+  muname.Move()
 
 
 if __name__ == "__main__":
