@@ -13,6 +13,7 @@ from mutagen.oggvorbis import OggVorbis
 
 
 SUPPORTED_TYPES = ['audio/mpeg', 'audio/ogg']
+TAGS = ['artist', 'track', 'album', 'album_artist', 'title', 'genre']
 DEFAULT_FORMAT = ''
   
 
@@ -30,19 +31,42 @@ class Song(object):
   def __init__(self, path):
     self._path = path
 
+    tags = self._GetTagInfo()
+
+    self._tag_info = self._NormalizeTags(tags)
+
+    for tag in TAGS:
+      setattr(self, tag, self._tag_info.get(tag, None))
+
+  def _NormalizeTags(self, tags):
+    tags['track'] = tags.get('track', None) or tags.get('tracknumber', None)
+
+    tag_info = {}
+    for k, v in tags.items():
+      tag_info[k] = v[0].encode('utf-8')
+
+    return tag_info
+
   def __str__(self):
-    return self._path
-  
+    return ('{artist} - {track} - {album} - {title}'.format(**self._tag_info))
+
   def __repr__(self):
     return str(self)
 
+  def _GetTagInfo(self):
+    raise NotImplementedError
+
 
 class Mp3(Song):
-  pass
+  def _GetTagInfo(self):
+    tags = EasyID3(self._path)
+    return dict(tags)
 
 
 class Ogg(Song):
-  pass
+  def _GetTagInfo(self):
+    tags = OggVorbis(self._path)
+    return dict(tags)
 
 
 def GetSong(path):
@@ -54,6 +78,7 @@ def GetSong(path):
     return Ogg(path)
   else:
     return None
+
 
 class Collection(object):
   """A collection of songs."""
@@ -68,7 +93,7 @@ class Collection(object):
     self.songs.append(song)
 
   def __str__(self):
-    return ', '.join([str(s) for s in self.songs])
+    return '\n'.join([str(s) for s in self.songs])
 
   def __repr__(self):
     return str(self)
