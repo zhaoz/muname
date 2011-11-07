@@ -42,11 +42,24 @@ def SanitizeFilename(name):
       name.translate(_SAFE_TRANS_TABLE))
 
 
+def _MoveFile(src, dest, overwrite=False):
+  """Move a file, creating directories and checking for preexistence."""
+
+  if os.path.exists(dest) and not overwrite:
+    raise IOError('File {0} already exists!'.format(dest))
+
+  dest_dir = os.path.dirname(dest)
+  if not os.path.exists(dest_dir):
+    self.makedirs(dest_dir)
+
+  shutil.move(src, dest)
+
+
 class Song(object):
   """Song Class."""
 
   def __init__(self, path):
-    self._path = path
+    self.path = path
 
     tags = self._GetTagInfo()
 
@@ -82,7 +95,7 @@ class Mp3(Song):
   EXTENSION = 'mp3'
 
   def _GetTagInfo(self):
-    tags = EasyID3(self._path)
+    tags = EasyID3(self.path)
     return dict(tags)
 
 
@@ -90,7 +103,7 @@ class Ogg(Song):
   EXTENSION = 'ogg'
 
   def _GetTagInfo(self):
-    tags = OggVorbis(self._path)
+    tags = OggVorbis(self.path)
     return dict(tags)
 
 
@@ -200,6 +213,8 @@ class MuName(object):
     self._destination = os.path.abspath(destination)
     self._output_format = output_format
 
+    self._no_action = no_action
+
     if os.path.isdir(source):
       self._source = os.path.abspath(source)
     else:
@@ -236,8 +251,19 @@ class MuName(object):
   def Move(self):
     """Move the collection to the given destination folder."""
 
+    if self._no_action:
+      print 'No action specified, not moving files.'
+
     for path, song in self._collection.songs():
-      print 'path: {0} ... song: {1}'.format(os.path.join(self._source, path), song)
+      new_path = os.path.join(self._destination, path)
+      print '{0} -> {1}'.format(song.path, new_path)
+
+      if not self._no_action:
+        # ensure that path exists
+        try:
+          _MoveFile(song.path, new_path)
+        except IOError as (errno, strerror) :
+          sys.stderr.write('IOError: {0} - {1}\n'.format(errno, strerror))
 
 
 def _GetParser():
