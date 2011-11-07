@@ -50,12 +50,14 @@ class Song(object):
       setattr(self, tag, self.tag_info.get(tag, None))
 
   def _NormalizeTags(self, tags):
+    """Normalize the tags for easy consumption."""
     tag_info = {}
     for k, v in tags.items():
       tag_info[k] = v[0].encode('utf-8')
 
     track = tags.get('track', None) or tags.get('tracknumber', None)
 
+    # if there is a track, extract it, and format it so that it is 2 digits.
     if track:
       track = int(_TRACK_RE.findall(track[0])[0])
       tag_info['track'] = '{0:02}'.format(track)
@@ -88,7 +90,7 @@ class Ogg(Song):
     return dict(tags)
 
 
-def GetSong(path):
+def MakeSong(path):
   t = mimetypes.guess_type(path)[0]
 
   if t == 'audio/mpeg':
@@ -222,7 +224,7 @@ class MuName(object):
     for root, dirs, files in os.walk(self._source, followlinks=True):
       for f in files:
         path = os.path.join(root, f)
-        song = GetSong(path)
+        song = MakeSong(path)
         if song:
           collection.add(song)
 
@@ -239,7 +241,7 @@ class MuName(object):
 
     file_op(src, dest)
 
-  def _TransformCollection(self, file_op=None):
+  def _MapCollection(self, file_op=None):
     if not file_op:
       raise ValueError('No file operation given.')
 
@@ -259,15 +261,15 @@ class MuName(object):
 
   def Copy(self):
     """Copy the collection to the given destination folder."""
-    self._TransformCollection(shutil.copy)
+    self._MapCollection(shutil.copy)
 
   def Move(self):
     """Move the collection to the given destination folder."""
-    self._TransformCollection(shutil.move)
+    self._MapCollection(shutil.move)
 
   def Symlink(self):
     """Create symlinks."""
-    self._TransformCollection(os.symlink)
+    self._MapCollection(os.symlink)
 
 
 def _GetParser():
