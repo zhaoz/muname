@@ -39,19 +39,6 @@ def SanitizeFilename(name):
       name.translate(_SAFE_TRANS_TABLE))
 
 
-def _MoveFile(src, dest, overwrite=False):
-  """Move a file, creating directories and checking for preexistence."""
-
-  if os.path.exists(dest) and not overwrite:
-    raise IOError('File {0} already exists!'.format(dest))
-
-  dest_dir = os.path.dirname(dest)
-  if not os.path.exists(dest_dir):
-    self.makedirs(dest_dir)
-
-  shutil.move(src, dest)
-
-
 class Song(object):
   """Song Class."""
 
@@ -245,11 +232,22 @@ class MuName(object):
     self._collection = collection
     return collection
 
-  def Move(self):
-    """Move the collection to the given destination folder."""
+  def _FileOp(self, src, dest, file_op=None):
+    if os.path.exists(dest) and not overwrite:
+      raise IOError('File {0} already exists!'.format(dest))
+
+    dest_dir = os.path.dirname(dest)
+    if not os.path.exists(dest_dir):
+      os.makedirs(dest_dir)
+
+    file_op(src, dest)
+
+  def _TransformCollection(self, file_op=None):
+    if not file_op:
+      raise ValueError('No file operation given.')
 
     if self._no_action:
-      print 'No action specified, not moving files.'
+      print 'No action specified, no file operations will be performed.'
 
     for path, song in self._collection.songs():
       new_path = os.path.join(self._destination, path)
@@ -258,9 +256,21 @@ class MuName(object):
       if not self._no_action:
         # ensure that path exists
         try:
-          _MoveFile(song.path, new_path)
+          self._FileOp(song.path, new_path, file_op=file_op)
         except IOError as (errno, strerror) :
           sys.stderr.write('IOError: {0} - {1}\n'.format(errno, strerror))
+
+  def Copy(self):
+    """Copy the collection to the given destination folder."""
+    self._TransformCollection(shutil.copy)
+
+  def Move(self):
+    """Move the collection to the given destination folder."""
+    self._TransformCollection(shutil.move)
+
+  def Link(self):
+    """Create symlinks."""
+    self._TransformCollection(shutil.symlink)
 
 
 def _GetParser():
