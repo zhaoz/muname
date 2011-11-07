@@ -91,6 +91,14 @@ class Ogg(Song):
 
 
 def MakeSong(path):
+  """Create song class from given path, if it is a song.
+
+  Args:
+    path: Path where song is located.
+
+  Returns:
+    Create a song class if path points to a song.
+  """
   t = mimetypes.guess_type(path)[0]
 
   if t == 'audio/mpeg':
