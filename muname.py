@@ -115,7 +115,6 @@ class Collection(object):
   def __init__(self, format_string=DEFAULT_OUTPUT_FORMAT):
     self._format = format_string
     self._path_parts = _ParseFormatString(self._format)
-    self._songs = []
     self._structure = {}
 
   def add(self, song):
@@ -129,7 +128,6 @@ class Collection(object):
 
     if not isinstance(song, Song):
       song = Song(song)
-    self._songs.append(song)
 
     self._PutInStructure(song)
 
