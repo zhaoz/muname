@@ -16,25 +16,22 @@ from mutagen.oggvorbis import OggVorbis
 
 SUPPORTED_TYPES = ['audio/mpeg', 'audio/ogg']
 TAGS = ['artist', 'track', 'album', 'album_artist', 'title', 'genre']
-DEFAULT_FORMAT = '{artist}/{album}/{track} - {title}'
+DEFAULT_OUTPUT_FORMAT = '{artist}/{album}/{track} - {title}'
 
 _TRACK_RE = re.compile(r'^\d+')
 _FILE_ESCAPE_RE = re.compile(r'([/])')
-_SAFE_TRANS_TABLE = string.maketrans(
-    ':',
-    '_'
-    )
-
-
-def GetType(path):
-  return mimetypes.guess_type(path)[0]
-
-
-def IsSong(path):
-  return GetType(path) in SUPPORTED_TYPES
+_SAFE_TRANS_TABLE = string.maketrans(':', '_')
 
 
 def SanitizeFilename(name):
+  """Given a name, make sure that it can be made a file cleanly.
+
+  Args:
+    name: Filename.
+
+  Returns:
+    Sanitized filename.
+  """
   return _FILE_ESCAPE_RE.sub(r'\\\1',
       name.translate(_SAFE_TRANS_TABLE))
 
@@ -92,7 +89,7 @@ class Ogg(Song):
 
 
 def GetSong(path):
-  t = GetType(path)
+  t = mimetypes.guess_type(path)[0]
 
   if t == 'audio/mpeg':
     return Mp3(path)
@@ -113,7 +110,7 @@ def _ParseFormatString(path):
 class Collection(object):
   """A collection of songs."""
 
-  def __init__(self, format_string=DEFAULT_FORMAT):
+  def __init__(self, format_string=DEFAULT_OUTPUT_FORMAT):
     self._format = format_string
     self._path_parts = _ParseFormatString(self._format)
     self._songs = []
@@ -184,7 +181,7 @@ class MuName(object):
   """
 
   def __init__(self, destination=None, source=None, no_action=True,
-               output_format=DEFAULT_FORMAT):
+               output_format=DEFAULT_OUTPUT_FORMAT):
     """MuName __init__
 
     Initialize the MuName object with given parameters.
