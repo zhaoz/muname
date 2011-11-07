@@ -8,7 +8,9 @@ import mimetypes
 from optparse import OptionParser
 import os
 import pprint
+import re
 import shutil
+import string
 import sys
 
 from mutagen.easyid3 import EasyID3
@@ -19,6 +21,13 @@ SUPPORTED_TYPES = ['audio/mpeg', 'audio/ogg']
 TAGS = ['artist', 'track', 'album', 'album_artist', 'title', 'genre']
 DEFAULT_FORMAT = '{artist}/{album}/{track} - {title}'
 
+_TRACK_RE = re.compile(r'^\d+')
+_FILE_ESCAPE_RE = re.compile(r'([\\ ()/])')
+_SAFE_TRANS_TABLE = string.maketrans(
+    ':',
+    '_'
+    )
+
 
 def GetType(path):
   return mimetypes.guess_type(path)[0]
@@ -26,6 +35,11 @@ def GetType(path):
 
 def IsSong(path):
   return GetType(path) in SUPPORTED_TYPES
+
+
+def SanitizeFilename(name):
+  return _FILE_ESCAPE_RE.sub(r'\\\1',
+      name.translate(_SAFE_TRANS_TABLE))
 
 
 class Song(object):
@@ -42,11 +56,15 @@ class Song(object):
       setattr(self, tag, self.tag_info.get(tag, None))
 
   def _NormalizeTags(self, tags):
-    tags['track'] = tags.get('track', None) or tags.get('tracknumber', None)
-
     tag_info = {}
     for k, v in tags.items():
       tag_info[k] = v[0].encode('utf-8')
+
+    track = tags.get('track', None) or tags.get('tracknumber', None)
+
+    if track:
+      track = int(_TRACK_RE.findall(track[0])[0])
+      tag_info['track'] = '{0:02}'.format(track)
 
     return tag_info
 
@@ -61,12 +79,16 @@ class Song(object):
 
 
 class Mp3(Song):
+  EXTENSION = 'mp3'
+
   def _GetTagInfo(self):
     tags = EasyID3(self._path)
     return dict(tags)
 
 
 class Ogg(Song):
+  EXTENSION = 'ogg'
+
   def _GetTagInfo(self):
     tags = OggVorbis(self._path)
     return dict(tags)
@@ -133,7 +155,7 @@ class Collection(object):
       level = next_level
 
     # place song at the last level
-    last_level[piece] = song
+    last_level['{0}.{1}'.format(piece, song.EXTENSION)] = song
 
   def songs(self):
     """Generator that returns tuples of (path, song)."""
@@ -143,12 +165,12 @@ class Collection(object):
       path, cur_level = levels.pop()
 
       if not isinstance(cur_level, Song):
-        levels.extend([(os.path.join(path, name), obj) for name, obj in cur_level.items()])
+        for name, obj in cur_level.iteritems():
+          levels.append((os.path.join(path, SanitizeFilename(name)), obj))
         continue
 
       # we've hit a song
       yield path, cur_level
-
 
   def __str__(self):
     return pprint.pformat(self._structure)
