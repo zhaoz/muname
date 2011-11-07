@@ -320,6 +320,8 @@ def main():
     muname.Copy()
   elif opts.operation == 'symlink':
     muname.Symlink()
+  else:
+    sys.stderr.write('Unknown operation: {0}'.format(opts.operation))
 
 
 if __name__ == "__main__":
