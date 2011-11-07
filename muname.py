@@ -185,7 +185,7 @@ class MuName(object):
   """
 
   def __init__(self, destination=None, source=None, no_action=True,
-               output_format=DEFAULT_OUTPUT_FORMAT):
+               quiet=False, output_format=DEFAULT_OUTPUT_FORMAT):
     """MuName __init__
 
     Initialize the MuName object with given parameters.
@@ -197,6 +197,7 @@ class MuName(object):
     """
     self._destination = os.path.abspath(destination)
     self._output_format = output_format
+    self._quiet = quiet
 
     self._no_action = no_action
 
@@ -233,7 +234,7 @@ class MuName(object):
     self._collection = collection
     return collection
 
-  def _FileOp(self, src, dest, file_op=None):
+  def _FileOp(self, src, dest, file_op=None, overwrite=False):
     if os.path.exists(dest) and not overwrite:
       raise IOError('File {0} already exists!'.format(dest))
 
@@ -252,14 +253,16 @@ class MuName(object):
 
     for path, song in self._collection.songs():
       new_path = os.path.join(self._destination, path)
-      print '{0} -> {1}'.format(song.path, new_path)
+
+      if not self._quiet:
+        print '{0} -> {1}'.format(song.path, new_path)
 
       if not self._no_action:
         # ensure that path exists
         try:
           self._FileOp(song.path, new_path, file_op=file_op)
-        except IOError as (errno, strerror) :
-          sys.stderr.write('IOError: {0} - {1}\n'.format(errno, strerror))
+        except IOError, ex:
+          sys.stderr.write('IOError: {0}\n'.format(ex))
 
   def Copy(self):
     """Copy the collection to the given destination folder."""
@@ -290,6 +293,10 @@ def _GetParser():
                     dest='no_action',
                     action='store_true',
                     help='Do not actually do the operation')
+  parser.add_option('-q', '--quiet',
+                    dest='quiet',
+                    action='store_true',
+                    help='Do not output operations.')
 
   parser.set_defaults(no_action=False, operation='move',
                       output_format=DEFAULT_OUTPUT_FORMAT)
@@ -312,6 +319,7 @@ def main():
   muname = MuName(destination=opts.destination,
                   source=opts.source,
                   no_action=opts.no_action,
+                  quiet=opts.quiet,
                   output_format=opts.output_format)
   muname.Scan()
 
