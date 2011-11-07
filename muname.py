@@ -7,6 +7,7 @@
 import mimetypes
 from optparse import OptionParser
 import os
+import pprint
 import sys
 
 from mutagen.easyid3 import EasyID3
@@ -34,10 +35,10 @@ class Song(object):
 
     tags = self._GetTagInfo()
 
-    self._tag_info = self._NormalizeTags(tags)
+    self.tag_info = self._NormalizeTags(tags)
 
     for tag in TAGS:
-      setattr(self, tag, self._tag_info.get(tag, None))
+      setattr(self, tag, self.tag_info.get(tag, None))
 
   def _NormalizeTags(self, tags):
     tags['track'] = tags.get('track', None) or tags.get('tracknumber', None)
@@ -49,7 +50,7 @@ class Song(object):
     return tag_info
 
   def __str__(self):
-    return ('{artist} - {track} - {album} - {title}'.format(**self._tag_info))
+    return ('{artist} - {track} - {album} - {title}'.format(**self.tag_info))
 
   def __repr__(self):
     return str(self)
@@ -81,20 +82,60 @@ def GetSong(path):
     return None
 
 
+def _ParseFormatString(path):
+  parts = []
+  while path:
+    (path, end) = os.path.split(path)
+    parts.insert(0, end)
+  return parts
+
+
 class Collection(object):
   """A collection of songs."""
 
   def __init__(self, format_string=DEFAULT_FORMAT):
     self._format = format_string
+    self._path_parts = _ParseFormatString(self._format)
     self.songs = []
+    self.structure = {}
   
   def add(self, song):
+    """Add a song to the collection.
+
+    Given a song add to collection, place in the collection structure.
+
+    Args:
+      song: Song to put in, either string path or song object.
+    """
+
     if not isinstance(song, Song):
       song = Song(song)
     self.songs.append(song)
 
+    self._PutInStructure(song)
+
+  def _PutInStructure(self, song):
+    """Place song in dir structure."""
+
+    level = self.structure
+    last_level = None
+    piece = None
+
+    for part in self._path_parts:
+      piece = part.format(**song.tag_info)
+
+      next_level = level.get(piece, None)
+      if not next_level:
+        level[piece] = {}
+        next_level = level[piece]
+      last_level = level
+      level = next_level
+
+    # place song at the last level
+    last_level[piece] = song
+
   def __str__(self):
-    return '\n'.join([str(s) for s in self.songs])
+    return pprint.pformat(self.structure)
 
   def __repr__(self):
     return str(self)
@@ -151,7 +192,6 @@ class MuName(object):
     
     print(collection)
     return collection
-
 
 
 def _GetParser():
