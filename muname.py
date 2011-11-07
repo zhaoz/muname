@@ -1,9 +1,6 @@
 #!/usr/bin/python2.7
 # vim: expandtab ts=2 sw=2 :
 
-# TODO: need to validate source and destination directories
-# TODO: Define the output format string specification.
-
 import mimetypes
 from optparse import OptionParser
 import os
