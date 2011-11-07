@@ -19,7 +19,7 @@ TAGS = ['artist', 'track', 'album', 'album_artist', 'title', 'genre']
 DEFAULT_FORMAT = '{artist}/{album}/{track} - {title}'
 
 _TRACK_RE = re.compile(r'^\d+')
-_FILE_ESCAPE_RE = re.compile(r'([\\()/])')
+_FILE_ESCAPE_RE = re.compile(r'([/])')
 _SAFE_TRANS_TABLE = string.maketrans(
     ':',
     '_'
