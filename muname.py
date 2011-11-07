@@ -290,7 +290,7 @@ def _GetParser():
                     help='Do not actually do the operation')
 
   parser.set_defaults(no_action=False, operation='move',
-                      output_format=DEFAULT_FORMAT)
+                      output_format=DEFAULT_OUTPUT_FORMAT)
 
   return parser
 
